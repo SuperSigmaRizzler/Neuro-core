@@ -1,0 +1,15 @@
+flask
+requests
+gunicorn
+python-dotenv
+beautifulsoup4
+pypdf
+mistralai
+pillow
+werkzeug
+paddleocr
+paddlepaddle
+
+# Optional local OCR.
+# Install manually later if needed:
+# pip install paddleocr
