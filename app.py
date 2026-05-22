@@ -38,6 +38,7 @@ from config import (
     VISION_LIMIT
 )
 from core.db import (
+    safe_user_id,
     add_message as db_add_message,
     attach_upload_to_chat,
     authenticate_user,

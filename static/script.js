@@ -86,7 +86,28 @@ async function init() {
 
   await loadMe();
   await enterApp();
+  setSendIdle();
 }
+
+
+function setSendIdle() {
+  if (!sendBtn) return;
+  sendBtn.classList.remove("is-stopping");
+  sendBtn.textContent = "";
+  sendBtn.title = "Send";
+  sendBtn.type = "submit";
+  sendBtn.onclick = null;
+}
+
+function setSendBusy() {
+  if (!sendBtn) return;
+  sendBtn.classList.add("is-stopping");
+  sendBtn.textContent = "";
+  sendBtn.title = "Stop generating";
+  sendBtn.type = "button";
+  sendBtn.onclick = stopGenerating;
+}
+
 
 function bindEvents() {
   topLoginBtn.addEventListener("click", () => openAuth("login"));
@@ -243,6 +264,17 @@ function renderAuthState() {
     accountAvatar.textContent = name.slice(0, 1).toUpperCase();
     sideSub.textContent = "Synced Account";
 
+    if (logoutBtn) {
+      logoutBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 6H6.8C5.8 6 5 6.8 5 7.8v8.4C5 17.2 5.8 18 6.8 18H10" />
+          <path d="M14 8l4 4-4 4" />
+          <path d="M9 12h9" />
+        </svg>
+      `;
+      logoutBtn.title = "Log out";
+    }
+
   } else {
     topAuth.classList.remove("hidden");
     topUser.classList.add("hidden");
@@ -367,6 +399,10 @@ async function createAccount() {
 
 async function logoutAccount() {
   if (isGenerating) return;
+
+  const ok = confirm("Log out from NeuroACC?");
+
+  if (!ok) return;
 
   await fetch("/api/logout", {
     method: "POST"
@@ -563,16 +599,38 @@ function renderHistory() {
   });
 }
 
+
+function getNeuroDisplayName() {
+  const raw =
+    (currentUser && (currentUser.display_name || currentUser.name || currentUser.username)) ||
+    "Guest";
+
+  return String(raw).trim() || "Guest";
+}
+
+
 function renderChat() {
   chatTitle.textContent = currentChatTitle || "New Chat";
+  chatBox.classList.toggle("new-chat-view", !currentMessages.length);
+  document.body.classList.toggle("is-new-chat", !currentMessages.length);
   chatBox.innerHTML = "";
 
   if (!currentMessages.length) {
+    const displayName = getNeuroDisplayName();
+
     chatBox.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-logo"><span></span></div>
-        <h2>How can I help?</h2>
-        <p>${currentUser ? "Synced with NeuroACC." : "Guest mode. Log in to sync across devices."}</p>
+      <div class="empty-state neuromv-hero">
+        <div class="empty-logo neuromv-prism-logo" aria-hidden="true">
+          <span class="prism-glow"></span>
+          <span class="prism-shape"></span>
+          <span class="prism-core"></span>
+        </div>
+
+        <h2 class="hero-title">Ready when you are, ${escapeHtml(displayName)}.</h2>
+
+        <p class="hero-subtitle">
+          ${currentUser ? "Synced with NeuroACC." : "Log in to save your chats across devices."}
+        </p>
       </div>
     `;
     return;
@@ -659,11 +717,45 @@ function renderRichText(text) {
 }
 
 function renderPlainText(text) {
-  const escaped = escapeHtml(text);
+  const raw = String(text || "");
 
-  return escaped
-    .replace(/!([^]*)\](https?:\/\/[^\s)]+)/g, '<img class="chat-image" src="$2" alt="$1">')
+  let protectedText = raw
+    .replace(/\[\[NEUROMV_IMAGE:([^\|\]]+)\|([^\|\]]*)\|([^\]]*)\]\]/g, (_m, url, name, size) => {
+      return `<div class="message-attachment image-attachment">
+        <img src="${escapeHtml(url)}" alt="">
+        <div>
+          <strong>${escapeHtml(name || "Image")}</strong>
+          <p>${escapeHtml(size || "Uploaded image")}</p>
+        </div>
+      </div>`;
+    })
+    .replace(/\[\[NEUROMV_FILE:([^\|\]]+)\|([^\|\]]*)\|([^\]]*)\]\]/g, (_m, url, name, size) => {
+      return `<a class="message-attachment file-attachment" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+        <div class="file-icon small">📄</div>
+        <div>
+          <strong>${escapeHtml(name || "File")}</strong>
+          <p>${escapeHtml(size || "Uploaded file")}</p>
+        </div>
+      </a>`;
+    });
+
+  if (window.marked) {
+    try {
+      window.marked.setOptions({
+        gfm: true,
+        breaks: true
+      });
+
+      return window.marked.parse(protectedText);
+    } catch (e) {
+      console.warn("Markdown render failed, fallback used:", e);
+    }
+  }
+
+  return escapeHtml(protectedText)
+    .replace(/!\[([^\]]*)\]\(((?:https?:\/\/|\/)[^\s)]+)\)/g, '<img class="chat-image" src="$2" alt="$1">')
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code class=\"inline-code\">$1</code>")
     .replace(/\n/g, "<br>");
 }
@@ -1053,9 +1145,8 @@ function flushAssistantStreamQueue(assistantId) {
 
   let take = STREAM_CHUNK_SIZE;
 
-  // Slightly bigger chunks for whitespace-heavy parts so it doesn't feel stuck.
-  if (queue[0] === "
-" || queue[0] === " ") {
+  // Bigger chunks for whitespace/newlines so streaming doesn't feel stuck.
+  if (queue[0] === "\n" || queue[0] === " ") {
     take = Math.max(take, 5);
   }
 
@@ -1124,6 +1215,7 @@ function updateAssistantDom(assistantId) {
 function createStatusElement(status) {
   const el = document.createElement("div");
 
+  // Flash only: pulsing dot.
   if (status === "instant") {
     el.className = "ai-status instant-status";
     el.innerHTML = `<span class="instant-dot"></span>`;
@@ -1144,18 +1236,16 @@ function createStatusElement(status) {
     thinking: "thinking-status",
     searching: "searching-status",
     creating_image: "image-status",
-    reading_file: "searching-status",
-    reading_pdf: "searching-status",
-    reading_url: "searching-status",
+    reading_file: "tool-status",
+    reading_pdf: "tool-status",
+    reading_url: "tool-status",
     analyzing_image: "image-status"
   };
 
-  el.className = `ai-status ${classMap[status] || "thinking-status"}`;
-
+  el.className = `ai-status glossy-status ${classMap[status] || "thinking-status"}`;
   el.innerHTML = `
-    <span class="status-orb"></span>
-    <span>${labelMap[status] || "Thinking"}</span>
-    <span class="status-dots"><i></i><i></i><i></i></span>
+    <span class="status-shine"></span>
+    <span class="status-label">${labelMap[status] || "Thinking"}</span>
   `;
 
   return el;
@@ -1179,7 +1269,7 @@ function finishGeneration() {
   activeController = null;
   activeAssistantId = null;
 
-  sendBtn.textContent = "↑";
+  setSendIdle();
   sendBtn.title = "Send";
   sendBtn.type = "submit";
   sendBtn.onclick = null;
