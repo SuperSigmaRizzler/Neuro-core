@@ -108,3 +108,50 @@ def choose_runtime_mode(user_selected_mode: str, message: str, intent: Dict | No
         return "thinking"
 
     return "instant"
+
+
+
+def strict_wants_image_generation(message: str) -> bool:
+    text = (message or "").lower().strip()
+
+    # Phrases that clearly mean "create a new image"
+    positive = [
+        "buat gambar",
+        "bikin gambar",
+        "generate image",
+        "buat image",
+        "bikin image",
+        "create an image",
+        "draw ",
+        "gambarkan ",
+        "visualisasikan sebagai gambar",
+        "jadikan gambar",
+        "buatkan gambar",
+        "bikinin gambar",
+        "buat foto",
+        "bikin foto",
+        "buatkan foto",
+        "bikinin foto"
+    ]
+
+    # Phrases that are usually NOT image generation
+    negative = [
+        "ketik",
+        "tulis",
+        "jawab",
+        "jelaskan",
+        "apa ini",
+        "analisis",
+        "baca",
+        "lihat gambar",
+        "foto ini",
+        "screenshot ini",
+        "emoji",
+        "pakai emoji",
+        "dengan emoji"
+    ]
+
+    if any(x in text for x in negative) and not any(x in text for x in positive):
+        return False
+
+    return any(x in text for x in positive)

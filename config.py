@@ -148,3 +148,14 @@ PDF_EXTS = {
 ALLOWED_UPLOAD_EXTS = TEXT_EXTS | IMAGE_EXTS | PDF_EXTS
 
 CHAT_COOLDOWN_SECONDS = env_int("CHAT_COOLDOWN_SECONDS", 3)
+
+# ==================================================
+# PREMIUM / LIMITED MODES
+# ==================================================
+PRO_PROVIDER = "gemini"
+PRO_MODEL = "gemini-2.5-flash"
+PRO_DAILY_LIMIT = 3
+
+GOD_PROVIDER = "gemini"
+GOD_MODEL = "gemini-2.5-pro"
+GOD_DAILY_LIMIT = 1
