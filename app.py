@@ -61,8 +61,6 @@ from core.learning import lessons_prompt_context, maybe_store_lesson
 from core.limits import LimitError, check_limit, format_limit_error
 from core.memory import delete_chat_memory
 from core.prompt_builder import build_messages_from_history
-from core.mode_limits import build_limit_fingerprint, check_mode_limit, consume_mode_limit, ModeLimitError, mode_status
-from core.brain_context import build_brain_context, maybe_learn_from_turn, init_brain_tables, refresh_chat_summary_from_db
 from core.security import UploadSecurityError, build_safe_upload_path, validate_upload
 from core.utils import clean_spaces, ensure_dir, filename_ext, human_size, normalize_user_key, safe_truncate
 from providers.router import stream_model_response
@@ -76,16 +74,6 @@ from tools.url_reader import extract_urls
 # ==================================================
 
 app = Flask(__name__)
-init_brain_tables()
-
-def get_current_user_id():
-    return (
-        session.get("user_id")
-        or session.get("uid")
-        or session.get("username")
-        or "guest"
-    )
-
 app.secret_key = SECRET_KEY
 app.permanent_session_lifetime = timedelta(days=60)
 
@@ -173,18 +161,7 @@ def sse(event_type: str, data: Dict):
 
 
 def get_current_user():
-    user = session.get("user")
-
-    if not user:
-        return None
-
-    user_id = user.get("id") if isinstance(user, dict) else None
-
-    if not safe_user_id(user_id):
-        session.clear()
-        return None
-
-    return user
+    return session.get("user")
 
 
 def set_current_user(user):
@@ -614,7 +591,7 @@ def chat():
             upload_row = save_uploaded_file(
                 upload,
                 user_key=user_key,
-                user_id=safe_user_id(user.get("id")) if user else None,
+                user_id=user["id"] if user else None,
                 chat_id=incoming_chat_id
             )
 
@@ -676,7 +653,7 @@ def chat():
                     attach_upload_to_chat(
                         upload_row["id"],
                         real_chat_id,
-                        user_id=valid_user_id
+                        user_id=user["id"]
                     )
 
                 history = get_recent_model_history(
@@ -754,22 +731,6 @@ def chat():
                 if user:
                     db_add_message(user["id"], real_chat_id, "user", user_message)
                     db_add_message(user["id"], real_chat_id, "assistant", answer)
-
-                try:
-                    username_for_memory = ""
-                    if user and isinstance(user, dict):
-                        username_for_memory = str(
-                            user.get("username") or user.get("name") or user.get("display_name") or ""
-                        )
-
-                    maybe_learn_from_turn(
-                        user_message=user_message,
-                        assistant_message=answer,
-                        user_key=user_key,
-                        username=username_for_memory
-                    )
-                except Exception:
-                    pass
 
                 yield sse("status", {"name": "clear"})
                 yield sse("token", {"text": answer})
@@ -855,23 +816,10 @@ def chat():
                 limit=12
             )
 
-            username_for_memory = ""
-            if user and isinstance(user, dict):
-                username_for_memory = str(
-                    user.get("username") or user.get("name") or user.get("display_name") or ""
-                )
-
-            brain_context = ""
-
-            context_blocks = [INTERNAL_SECURITY_CONTEXT]
-
-            if brain_context:
-                context_blocks.append(brain_context)
-
             if lesson_context:
-                context_blocks.append(lesson_context)
-
-            lesson_context = "\n\n---\n\n".join(context_blocks)
+                lesson_context = INTERNAL_SECURITY_CONTEXT + "\n\n" + lesson_context
+            else:
+                lesson_context = INTERNAL_SECURITY_CONTEXT
 
             messages = build_messages_from_history(
                 history=history,
@@ -921,28 +869,6 @@ def chat():
                     full_answer.strip(),
                     thought_seconds=thought_seconds
                 )
-
-                try:
-                    refresh_chat_summary_from_db(user_key, real_chat_id)
-                except Exception:
-                    pass
-
-            try:
-                username_for_memory = ""
-                if user and isinstance(user, dict):
-                    username_for_memory = str(
-                        user.get("username") or user.get("name") or user.get("display_name") or ""
-                    )
-
-                maybe_learn_from_turn(
-                    user_message=user_message,
-                    assistant_message=full_answer.strip(),
-                    user_key=user_key,
-                    chat_id=real_chat_id,
-                    username=username_for_memory
-                )
-            except Exception:
-                pass
 
             yield sse("done", {
                 "ok": True,
