@@ -20,11 +20,11 @@ MODE_LIMITS = {
         "message": "You've reached your limit for Pro mode today.",
         "subtitle": "Come back again tomorrow to use Pro mode again."
     },
-    "god": {
+    "ultra": {
         "daily": 1,
-        "label": "GOD",
-        "message": "You've reached your limit for GOD mode today.",
-        "subtitle": "Come back again tomorrow to use GOD mode again."
+        "label": "Ultra",
+        "message": "You've reached your limit for Ultra mode today.",
+        "subtitle": "Come back again tomorrow to use Ultra mode again."
     }
 }
 

@@ -227,40 +227,7 @@ def get_chat(user_id: str, chat_id: str) -> Optional[Dict]:
     return dict(row) if row else None
 
 
-def user_exists(user_id) -> bool:
-    if user_id is None:
-        return False
-
-    try:
-        with get_db() as db:
-            row = db.execute(
-                "SELECT id FROM users WHERE id = ?",
-                (user_id,)
-            ).fetchone()
-
-        return row is not None
-
-    except Exception:
-        return False
-
-
-def safe_user_id(user_id):
-    """
-    Railway/browser sessions can outlive the SQLite user row.
-    If session contains a stale user_id, do not let chat creation crash.
-    """
-    if user_id is None:
-        return None
-
-    if user_exists(user_id):
-        return user_id
-
-    return None
-
-
 def create_chat(user_id: str, first_message: str = "") -> Dict:
-
-    user_id = safe_user_id(user_id)
     chat_id = "chat_" + uuid.uuid4().hex
     title = make_title(first_message)
     t = now_ts()
@@ -283,7 +250,6 @@ def create_chat(user_id: str, first_message: str = "") -> Dict:
 
 
 def ensure_chat(user_id: str, chat_id: Optional[str], first_message: str = "") -> Dict:
-    user_id = safe_user_id(user_id)
     if chat_id:
         chat = get_chat(user_id, chat_id)
         if chat:
