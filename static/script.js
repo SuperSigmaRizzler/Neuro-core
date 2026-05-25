@@ -264,6 +264,17 @@ function renderAuthState() {
     accountAvatar.textContent = name.slice(0, 1).toUpperCase();
     sideSub.textContent = "Synced Account";
 
+    if (logoutBtn) {
+      logoutBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 6H6.8C5.8 6 5 6.8 5 7.8v8.4C5 17.2 5.8 18 6.8 18H10" />
+          <path d="M14 8l4 4-4 4" />
+          <path d="M9 12h9" />
+        </svg>
+      `;
+      logoutBtn.title = "Log out";
+    }
+
   } else {
     topAuth.classList.remove("hidden");
     topUser.classList.add("hidden");
@@ -388,6 +399,10 @@ async function createAccount() {
 
 async function logoutAccount() {
   if (isGenerating) return;
+
+  const ok = confirm("Log out from NeuroACC?");
+
+  if (!ok) return;
 
   await fetch("/api/logout", {
     method: "POST"
@@ -919,10 +934,7 @@ async function handleSubmit(e) {
 async function streamChat(message, chatId, assistantId, file) {
   isGenerating = true;
 
-  sendBtn.textContent = "■";
-  sendBtn.title = "Stop generating";
-  sendBtn.type = "button";
-  sendBtn.onclick = stopGenerating;
+  setSendBusy();
 
   activeController = new AbortController();
 

@@ -14,20 +14,3 @@ uploads/*
 
 .venv/
 venv/
-
-rescue_*/
-backup_*/
-
-# Local rescue/patch/debug files
-*.bak
-*.bak_*
-*.before_*
-*.old
-*.orig
-patch_*.py
-fix_*.py
-remove_debug_chat_lines.py
-commit_test_local/
-rescue_*/
-backup_*/
-local_junk_after_restore/

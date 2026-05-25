@@ -2426,3 +2426,394 @@ body:not(.is-new-chat) .main::after {
     grid-template-columns: 42px minmax(0, 1fr) 28px !important;
   }
 }
+
+/* ==================================================
+   SIDEBAR ACCOUNT BOTTOM PATCH
+================================================== */
+
+/* Put account section at the bottom of the sidebar */
+.account-box {
+  order: 999 !important;
+  margin-top: auto !important;
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px !important;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 10px 10px !important;
+}
+
+/* Label "Account" above the account row */
+.account-box::before {
+  content: "Account";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,.48);
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+/* Make sure chat history stays above account */
+.history {
+  min-height: 0 !important;
+}
+
+/* Cleaner exit button */
+.account-box button,
+#logoutBtn {
+  width: 34px !important;
+  height: 34px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(255,255,255,.075) !important;
+  color: rgba(255,255,255,.78) !important;
+  transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.account-box button:hover,
+#logoutBtn:hover {
+  background: rgba(255,95,95,.16) !important;
+  color: #ffb0b0 !important;
+}
+
+.account-box button:active,
+#logoutBtn:active {
+  transform: scale(.94);
+}
+
+#logoutBtn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Account text stays neat */
+.account-box strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-box p {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==================================================
+   SEND BUTTON ICON CLEANUP
+   Prevent real button text (Send / ■) from showing beside CSS icon.
+   Idle uses ↑, generating uses ■ based on title or is-stopping class.
+================================================== */
+
+#sendBtn {
+  font-size: 0 !important;
+  color: #0b0d12 !important;
+}
+
+#sendBtn::before {
+  content: "↑" !important;
+  font-size: 22px !important;
+  font-weight: 750 !important;
+  line-height: 1 !important;
+  transform: translateY(-1px) !important;
+}
+
+#sendBtn.is-stopping::before,
+#sendBtn[title="Stop generating"]::before {
+  content: "■" !important;
+  font-size: 15px !important;
+  transform: translateY(0) !important;
+}
+
+/* ==================================================
+   NEUROMV SAFE SHIMMER STATUS PATCH
+   CSS-only. Does not touch JS/backend/send/composer.
+   Target: status pills only.
+================================================== */
+
+.ai-status.glossy-status {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.145), rgba(255,255,255,.055)) !important;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 24px rgba(142,162,255,.10),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+}
+
+.ai-status.glossy-status::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 26%,
+      rgba(255,255,255,.22) 42%,
+      rgba(180,205,255,.18) 50%,
+      rgba(255,255,255,.20) 58%,
+      transparent 74%,
+      transparent 100%
+    ) !important;
+  transform: translateX(-135%) skewX(-12deg) !important;
+  animation: neuromvSafeStatusSweep 2.25s ease-in-out infinite !important;
+}
+
+.ai-status.glossy-status::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 1px !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255,255,255,.16), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,.10), transparent 62%) !important;
+  opacity: .86 !important;
+}
+
+.ai-status.glossy-status .status-label,
+.ai-status.glossy-status .status-shine {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.ai-status.thinking-status {
+  color: #c8dcff !important;
+}
+
+.ai-status.searching-status {
+  color: #c9fff0 !important;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 24px rgba(88,255,203,.10),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+.ai-status.image-status {
+  color: #ffe2ff !important;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 24px rgba(255,120,230,.10),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+.ai-status.tool-status {
+  color: #eef1ff !important;
+}
+
+/* Flash stays dot-only, but smoother and cleaner */
+.ai-status.instant-status {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 7px !important;
+}
+
+.ai-status.instant-status::before,
+.ai-status.instant-status::after {
+  display: none !important;
+}
+
+.instant-dot {
+  background: rgba(255,255,255,.88) !important;
+  box-shadow:
+    0 0 0 0 rgba(255,255,255,.22),
+    0 0 18px rgba(180,205,255,.34) !important;
+  animation: neuromvSafeInstantPulse .9s ease-in-out infinite !important;
+}
+
+@keyframes neuromvSafeStatusSweep {
+  0% {
+    transform: translateX(-135%) skewX(-12deg);
+    opacity: .05;
+  }
+
+  38% {
+    opacity: 1;
+  }
+
+  72%,
+  100% {
+    transform: translateX(135%) skewX(-12deg);
+    opacity: .08;
+  }
+}
+
+@keyframes neuromvSafeInstantPulse {
+  0%,
+  100% {
+    transform: scale(.72);
+    opacity: .40;
+    box-shadow:
+      0 0 0 0 rgba(255,255,255,.10),
+      0 0 10px rgba(180,205,255,.16);
+  }
+
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+    box-shadow:
+      0 0 0 8px rgba(255,255,255,.035),
+      0 0 22px rgba(180,205,255,.42);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-status.glossy-status::before,
+  .instant-dot {
+    animation: none !important;
+  }
+}
+
+
+/* ==================================================
+   NEUROMV TEXT SHIMMER WIPE STATUS
+   CSS-only. The wipe is on the TEXT, not the bubble.
+   Safe override for previous glossy bubble shimmer.
+================================================== */
+
+/* Stop bubble-wide shimmer sweep */
+.ai-status.glossy-status::before,
+.ai-status.glossy-status::after {
+  display: none !important;
+  animation: none !important;
+}
+
+/* Keep the pill clean and subtle */
+.ai-status.glossy-status {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.115), rgba(255,255,255,.045)) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.14) !important;
+  backdrop-filter: blur(18px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+/* Default text shimmer colors */
+.ai-status.glossy-status {
+  --shimmer-soft: rgba(200, 220, 255, .66);
+  --shimmer-mid: rgba(220, 235, 255, .88);
+  --shimmer-bright: rgba(255, 255, 255, 1);
+}
+
+/* Per-status vibe */
+.ai-status.thinking-status {
+  --shimmer-soft: rgba(190, 215, 255, .68);
+  --shimmer-mid: rgba(220, 235, 255, .9);
+  --shimmer-bright: rgba(255, 255, 255, 1);
+}
+
+.ai-status.searching-status {
+  --shimmer-soft: rgba(175, 255, 230, .68);
+  --shimmer-mid: rgba(210, 255, 242, .92);
+  --shimmer-bright: rgba(255, 255, 255, 1);
+}
+
+.ai-status.image-status {
+  --shimmer-soft: rgba(255, 200, 255, .70);
+  --shimmer-mid: rgba(255, 225, 255, .92);
+  --shimmer-bright: rgba(255, 255, 255, 1);
+}
+
+.ai-status.tool-status {
+  --shimmer-soft: rgba(218, 224, 255, .68);
+  --shimmer-mid: rgba(238, 242, 255, .92);
+  --shimmer-bright: rgba(255, 255, 255, 1);
+}
+
+/* The actual wipe: only the letters shimmer */
+.ai-status.glossy-status .status-label {
+  position: relative !important;
+  z-index: 1 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.018em !important;
+
+  background:
+    linear-gradient(
+      105deg,
+      var(--shimmer-soft) 0%,
+      var(--shimmer-soft) 30%,
+      var(--shimmer-bright) 43%,
+      var(--shimmer-mid) 50%,
+      var(--shimmer-bright) 57%,
+      var(--shimmer-soft) 70%,
+      var(--shimmer-soft) 100%
+    ) !important;
+
+  background-size: 240% 100% !important;
+  background-position: 140% 0 !important;
+
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+
+  animation: neuromvTextWipe 2.15s ease-in-out infinite !important;
+}
+
+/* Existing status-shine span should not create bubble wipe */
+.ai-status.glossy-status .status-shine {
+  display: none !important;
+}
+
+/* Flash remains dot-only */
+.ai-status.instant-status .status-label {
+  animation: none !important;
+  background: none !important;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.ai-status.instant-status::before,
+.ai-status.instant-status::after {
+  display: none !important;
+}
+
+@keyframes neuromvTextWipe {
+  0% {
+    background-position: 150% 0;
+  }
+
+  48% {
+    background-position: 0% 0;
+  }
+
+  100% {
+    background-position: -150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-status.glossy-status .status-label {
+    animation: none !important;
+    background: none !important;
+    color: rgba(230, 238, 255, .9) !important;
+    -webkit-text-fill-color: rgba(230, 238, 255, .9) !important;
+  }
+}
+
