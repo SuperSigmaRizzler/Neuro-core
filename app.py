@@ -38,6 +38,7 @@ from config import (
     VISION_LIMIT
 )
 from core.db import (
+    safe_user_id,
     add_message as db_add_message,
     attach_upload_to_chat,
     authenticate_user,
@@ -66,6 +67,7 @@ from providers.router import stream_model_response
 from tools.context_tools import merge_tool_context, read_uploaded_file_context, read_urls_context, search_context
 from tools.image_generator import make_image_markdown
 from tools.url_reader import extract_urls
+import re
 
 
 # ==================================================
@@ -333,7 +335,33 @@ def should_count_vision_limit(path: str) -> bool:
 
 
 def safe_title_from_message(message: str, fallback: str = "New Chat") -> str:
-    clean = clean_spaces(message)
+    text = str(message or "").strip()
+    text = re.sub(r"\s+", " ", text)
+
+    bad_titles = {
+        "",
+        "{text}",
+        "${text}",
+        "$text",
+        "undefined",
+        "null",
+        "none",
+        "[object object]",
+    }
+
+    if text.lower() in bad_titles:
+        return fallback
+
+    text = re.sub(r"^title\s*[:=-]\s*", "", text, flags=re.IGNORECASE).strip()
+    text = text.strip("\"'` ")
+
+    if text.lower() in bad_titles:
+        return fallback
+
+    if len(text) > 42:
+        text = text[:42].rstrip() + "..."
+
+    return text or fallback
 
     if not clean:
         return fallback
@@ -578,7 +606,9 @@ def chat():
         release_stream_lock(user_key)
         return jsonify({
             "ok": False,
-            "error": format_limit_error(e)
+            "error": format_limit_error(e),
+            "code": "limit_reached",
+            "lock": True
         }), 429
 
     upload_row = None
@@ -598,7 +628,9 @@ def chat():
             release_stream_lock(user_key)
             return jsonify({
                 "ok": False,
-                "error": format_limit_error(e)
+                "error": format_limit_error(e),
+            "code": "limit_reached",
+            "lock": True
             }), 429
 
         except UploadSecurityError as e:
@@ -717,7 +749,9 @@ def chat():
                     check_limit(user_key, "image")
                 except LimitError as e:
                     yield sse("error", {
-                        "message": format_limit_error(e)
+                        "message": format_limit_error(e),
+                        "code": "limit_reached",
+                        "lock": True
                     })
                     return
 
@@ -809,16 +843,81 @@ def chat():
 
             tool_context = merge_tool_context(contexts)
 
-            lesson_context = lessons_prompt_context(
+            # -----------------------------
+            # Brain / memory context.
+            # This is NeuroMV's "background briefing":
+            # memory first, project state first, tools later.
+            # -----------------------------
+            learned_lesson_context = lessons_prompt_context(
                 user_key=user_key,
                 chat_id=real_chat_id,
                 limit=12
             )
 
-            if lesson_context:
-                lesson_context = INTERNAL_SECURITY_CONTEXT + "\n\n" + lesson_context
-            else:
-                lesson_context = INTERNAL_SECURITY_CONTEXT
+            long_memory_context = ""
+            try:
+                from core.long_memory import retrieve_long_memory, retrieve_recent_conversation_notes
+
+                long_memory_context = retrieve_long_memory(
+                    user_key=user_key,
+                    chat_id=real_chat_id,
+                    user_message=user_message or "",
+                    limit=18
+                )
+
+                recent_long_notes = retrieve_recent_conversation_notes(
+                    user_key=user_key,
+                    limit=8
+                )
+
+                if recent_long_notes:
+                    long_memory_context = (
+                        (long_memory_context + "\n\n") if long_memory_context else ""
+                    ) + recent_long_notes
+            except Exception:
+                long_memory_context = ""
+
+            brain_context = ""
+            try:
+                from core.brain_context import build_brain_context
+
+                brain_context = build_brain_context(
+                    user_key,
+                    real_chat_id,
+                    user_message or ""
+                )
+            except Exception:
+                brain_context = ""
+
+            memory_blocks = [
+                INTERNAL_SECURITY_CONTEXT,
+                (
+                    "NeuroMV Background Briefing:\n"
+                    "- Read this as the assistant's quiet working context before answering.\n"
+                    "- Use cross-chat long memory, project state, learned corrections, and recent chat context first.\n"
+                    "- Treat memory as background context, not as something to announce.\n"
+                    "- Do not invent memories that are not present in memory/history/context.\n"
+                    "- Search is the final fallback for external/current information.\n"
+                    "- Image generation intent is handled before search.\n"
+                )
+            ]
+
+            if long_memory_context:
+                memory_blocks.append(
+                    "Cross-chat long-term memory:\n" + long_memory_context
+                )
+
+            if brain_context:
+                memory_blocks.append(
+                    "Project / user / chat brain context:\n" + brain_context
+                )
+
+            if learned_lesson_context:
+                memory_blocks.append(
+                    "Learned lessons and durable corrections:\n" + learned_lesson_context
+                )
+
+            lesson_context = "\n\n".join(block for block in memory_blocks if block)
 
             messages = build_messages_from_history(
                 history=history,
@@ -868,6 +967,53 @@ def chat():
                     full_answer.strip(),
                     thought_seconds=thought_seconds
                 )
+
+            # -----------------------------
+            # Long-term memory auto-update.
+            # Silent. Never shown in UI.
+            # Stores durable project/user context after a complete answer.
+            # -----------------------------
+            if full_answer.strip():
+                try:
+                    from core.long_memory import maybe_update_long_memory
+
+                    recent_context_for_memory = ""
+                    try:
+                        recent_context_for_memory = "\n".join(
+                            f"{m.get('role', 'user')}: {m.get('content') or m.get('text') or ''}"
+                            for m in (history or [])[-8:]
+                        )
+                    except Exception:
+                        recent_context_for_memory = ""
+
+                    maybe_update_long_memory(
+                        user_key=user_key,
+                        chat_id=real_chat_id,
+                        user_message=user_message or f"[Uploaded file: {(upload_row or {}).get('original_name', 'file')}]",
+                        assistant_message=full_answer.strip(),
+                        recent_context=recent_context_for_memory
+                    )
+                except Exception:
+                    pass
+
+            # -----------------------------
+            # Forced cross-chat conversation note.
+            # This is the small notebook layer: actual previous turns,
+            # so New Chat can remember what was discussed.
+            # -----------------------------
+            if full_answer.strip():
+                try:
+                    from core.long_memory import record_conversation_note
+
+                    record_conversation_note(
+                        user_key=user_key,
+                        chat_id=real_chat_id,
+                        user_message=user_message or f"[Uploaded file: {(upload_row or {}).get('original_name', 'file')}]",
+                        assistant_message=full_answer.strip(),
+                        importance=4
+                    )
+                except Exception:
+                    pass
 
             yield sse("done", {
                 "ok": True,

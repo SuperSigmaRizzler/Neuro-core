@@ -49,7 +49,6 @@ def check_limit(user_key: str, kind: str) -> Dict:
 
 
 def format_limit_error(error: LimitError) -> str:
-    info = getattr(error, "info", {}) or {}
-    kind = info.get("kind", "usage")
-    limit = info.get("limit", "?")
-    return f"Limit {kind} hari ini sudah habis. Batasnya {limit}/day."
+    # User-facing message only.
+    # Do not expose exact daily limits/counts in UI.
+    return "You've reached your usage limit. Please try again later."

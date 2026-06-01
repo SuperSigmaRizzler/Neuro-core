@@ -10,10 +10,12 @@ let currentChatTitle = "New Chat";
 let currentMode = "instant";
 let currentUser = null;
 let selectedFile = null;
+let composerPreview = null;
 
 let isGenerating = false;
 let activeAssistantId = null;
 let activeController = null;
+let limitLocked = false;
 
 // Smooth frontend streaming display.
 // Backend stays fast; frontend reveals text gradually.
@@ -82,6 +84,7 @@ init();
 
 async function init() {
   applySidebarState();
+  setupComposerPreview();
   bindEvents();
 
   await loadMe();
@@ -92,8 +95,21 @@ async function init() {
 
 function setSendIdle() {
   if (!sendBtn) return;
+
   sendBtn.classList.remove("is-stopping");
   sendBtn.textContent = "";
+
+  if (limitLocked) {
+    sendBtn.disabled = true;
+    sendBtn.classList.add("limit-locked");
+    sendBtn.title = "Usage limit reached";
+    sendBtn.type = "button";
+    sendBtn.onclick = null;
+    return;
+  }
+
+  sendBtn.disabled = false;
+  sendBtn.classList.remove("limit-locked");
   sendBtn.title = "Send";
   sendBtn.type = "submit";
   sendBtn.onclick = null;
@@ -108,6 +124,97 @@ function setSendBusy() {
   sendBtn.onclick = stopGenerating;
 }
 
+function setupComposerPreview() {
+  if (!attachmentPreview || !input) return;
+
+  composerPreview = document.createElement("div");
+  composerPreview.id = "composerPreview";
+  composerPreview.className = "composer-preview hidden";
+  composerPreview.setAttribute("aria-live", "polite");
+
+  // Put preview above textarea, below attachment card.
+  attachmentPreview.insertAdjacentElement("afterend", composerPreview);
+}
+
+function renderComposerPreview() {
+  if (!composerPreview || !input) return;
+
+  const text = input.value || "";
+
+  if (!text.trim()) {
+    composerPreview.classList.add("hidden");
+    composerPreview.innerHTML = "";
+    return;
+  }
+
+  composerPreview.classList.remove("hidden");
+
+  const previewContent = document.createElement("div");
+  previewContent.className = "content composer-preview-content";
+  previewContent.innerHTML = renderRichText(text);
+
+  composerPreview.innerHTML = "";
+  composerPreview.appendChild(previewContent);
+
+  attachCopyButtons(composerPreview);
+  enhanceRendered(composerPreview);
+}
+
+
+function lockLimitUI() {
+  limitLocked = true;
+
+  if (sendBtn) {
+    sendBtn.disabled = true;
+    sendBtn.classList.add("limit-locked");
+    sendBtn.title = "Usage limit reached";
+    sendBtn.type = "button";
+    sendBtn.onclick = null;
+  }
+
+  if (input) {
+    input.classList.add("limit-locked");
+  }
+}
+
+function showLimitPopup(message = "You've reached your usage limit. Please try again later.") {
+  lockLimitUI();
+
+  let modal = document.getElementById("limitModal");
+
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "limitModal";
+    modal.className = "limit-modal hidden";
+    modal.innerHTML = `
+      <div class="limit-card" role="dialog" aria-modal="true" aria-labelledby="limitTitle">
+        <div class="limit-icon">!</div>
+        <h2 id="limitTitle">You've reached your usage limit</h2>
+        <p>${escapeHtml(message)}</p>
+        <button type="button" id="limitOkBtn">OK</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const okBtn = modal.querySelector("#limitOkBtn");
+    if (okBtn) {
+      okBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
+      });
+    }
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    });
+  } else {
+    const msg = modal.querySelector("p");
+    if (msg) msg.textContent = message;
+  }
+
+  modal.classList.remove("hidden");
+}
 
 function bindEvents() {
   topLoginBtn.addEventListener("click", () => openAuth("login"));
@@ -141,9 +248,18 @@ function bindEvents() {
 
   form.addEventListener("submit", handleSubmit);
 
-  input.addEventListener("input", autoResize);
+  input.addEventListener("input", () => {
+    autoResize();
+    renderComposerPreview();
+  });
 
   input.addEventListener("keydown", e => {
+    if (limitLocked && e.key === "Enter") {
+      e.preventDefault();
+      showLimitPopup();
+      return;
+    }
+
     if (e.key === "Enter" && !e.shiftKey && !isMobile()) {
       e.preventDefault();
       form.requestSubmit();
@@ -465,6 +581,9 @@ function resetToNewChat() {
   currentChatTitle = "New Chat";
   selectedFile = null;
   fileInput.value = "";
+  input.value = "";
+  autoResize();
+  renderComposerPreview();
 
   renderAttachmentPreview();
 
@@ -481,7 +600,7 @@ async function openChat(chatId) {
   if (!chat) return;
 
   currentChatId = chat.id;
-  currentChatTitle = chat.title || "New Chat";
+  currentChatTitle = sanitizeChatTitle(chat.title, "New Chat");
 
   if (currentUser) {
     try {
@@ -548,7 +667,7 @@ function renderHistory() {
 
     const titleBtn = document.createElement("button");
     titleBtn.className = "history-title";
-    titleBtn.textContent = chat.title || "New Chat";
+    titleBtn.textContent = sanitizeChatTitle(chat.title, "New Chat");
     titleBtn.addEventListener("click", () => openChat(chat.id));
 
     const actions = document.createElement("div");
@@ -805,11 +924,23 @@ function enhanceRendered(root = document) {
     }
   } catch {}
 
+  typesetMath(root);
+}
+
+function typesetMath(root = document, attempt = 0) {
   try {
     if (window.MathJax && window.MathJax.typesetPromise) {
-      window.MathJax.typesetPromise([root]);
+      window.MathJax.typesetClear?.([root]);
+      window.MathJax.typesetPromise([root]).catch(() => {});
+      return;
     }
   } catch {}
+
+  // MathJax is loaded with defer, so early chat renders may happen before it is ready.
+  // Retry briefly instead of leaving LaTeX raw forever.
+  if (attempt < 8) {
+    setTimeout(() => typesetMath(root, attempt + 1), 250);
+  }
 }
 
 function escapeHtml(text) {
@@ -874,6 +1005,11 @@ async function handleSubmit(e) {
 
   const text = input.value.trim();
 
+  if (limitLocked) {
+    showLimitPopup();
+    return;
+  }
+
   if ((!text && !selectedFile) || isGenerating) return;
 
   const userText = text || `[Uploaded file: ${selectedFile?.name || "file"}]`;
@@ -918,6 +1054,7 @@ async function handleSubmit(e) {
 
   input.value = "";
   autoResize();
+  renderComposerPreview();
 
   renderChat();
   scrollToBottom();
@@ -981,6 +1118,11 @@ async function streamChat(message, chatId, assistantId, file) {
       try {
         const data = await response.json();
         msg = data.error || msg;
+
+        if (data.code === "limit_reached" || data.lock) {
+          showLimitPopup(msg);
+          return;
+        }
       } catch {}
 
       throw new Error(msg);
@@ -1042,8 +1184,8 @@ function handleSseBlock(raw, assistantId) {
     }
 
     if (data.title) {
-      currentChatTitle = data.title;
-      chatTitle.textContent = data.title;
+      currentChatTitle = sanitizeChatTitle(data.title, currentChatTitle || "New Chat");
+      chatTitle.textContent = currentChatTitle;
     }
 
     if (currentUser) loadChats();
@@ -1070,6 +1212,12 @@ function handleSseBlock(raw, assistantId) {
 
   if (type === "error") {
     clearAssistantStatus(assistantId);
+
+    if (data.code === "limit_reached" || data.lock) {
+      showLimitPopup(data.message || "You've reached your usage limit. Please try again later.");
+      return;
+    }
+
     appendAssistantText(assistantId, `⚠️ ${data.message || "Terjadi error."}`);
     return;
   }
@@ -1385,9 +1533,37 @@ function syncGuestCurrentMessages() {
   renderHistory();
 }
 
+function sanitizeChatTitle(value, fallback = "New Chat") {
+  let clean = String(value || "").replace(/\s+/g, " ").trim();
+
+  const badTitles = new Set([
+    "{text}",
+    "${text}",
+    "$text",
+    "undefined",
+    "null",
+    "none",
+    "[object Object]"
+  ]);
+
+  if (!clean || badTitles.has(clean.toLowerCase())) {
+    return fallback;
+  }
+
+  clean = clean
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/^title\s*[:=-]\s*/i, "")
+    .trim();
+
+  if (!clean || badTitles.has(clean.toLowerCase())) {
+    return fallback;
+  }
+
+  return clean.length > 42 ? clean.slice(0, 42).trim() + "..." : clean;
+}
+
 function makeTitle(text) {
-  const clean = String(text || "").replace(/\s+/g, " ").trim();
-  return clean.length > 34 ? clean.slice(0, 34) + "..." : clean || "New Chat";
+  return sanitizeChatTitle(text, "New Chat");
 }
 
 function makeId() {
@@ -1468,3 +1644,21 @@ input.addEventListener("focus", () => {
 input.addEventListener("blur", () => {
   setTimeout(updateAppViewportHeight, 120);
 });
+
+/* ==================================================
+   DISABLE SEPARATE COMPOSER PREVIEW BOX
+   Keep Markdown rendering after send, but no second preview box.
+================================================== */
+
+function setupComposerPreview() {
+  const oldPreview = document.getElementById("composerPreview");
+  if (oldPreview) oldPreview.remove();
+  composerPreview = null;
+}
+
+function renderComposerPreview() {
+  const oldPreview = document.getElementById("composerPreview");
+  if (oldPreview) oldPreview.remove();
+  composerPreview = null;
+}
+

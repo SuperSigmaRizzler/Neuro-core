@@ -212,14 +212,21 @@ def extract_memory_semantically(
                     "- important debugging history and decisions;\n"
                     "- repeated corrections about how NeuroMV should behave;\n"
                     "- stable workflow preferences;\n"
-                    "- important milestones or outcomes.\n\n"
+                    "- important milestones or outcomes;\n"
+                    "- learning sessions and topics the user studied, especially if the user may later ask what was discussed;\n"
+                    "- useful conversation summaries such as 'the user learned Python basics' or 'the user debugged streaming'.\n\n"
 
                     "Do NOT store:\n"
-                    "- ordinary one-off questions;\n"
+                    "- ordinary one-off questions that have no future continuity value;\n"
                     "- jokes with no future use;\n"
                     "- temporary logs/errors unless they are part of project history;\n"
                     "- passwords, API keys, tokens, secrets, .env values, credentials;\n"
                     "- private details that are not useful for future assistance.\n\n"
+
+                    "Important memory behavior:\n"
+                    "- If the user asks to learn something, store a concise memory of the learning topic and level.\n"
+                    "- If the user later asks 'kemarin kita bahas apa?', memory should help answer that.\n"
+                    "- Do not wait for explicit words like 'remember this' when the session topic is useful for continuity.\n\n"
 
                     "Memory should be detailed enough to preserve context, but concise. "
                     "Write items as facts/instructions for future NeuroMV behavior.\n\n"
@@ -231,8 +238,14 @@ def extract_memory_semantically(
                     "- milestone\n"
                     "- workflow\n"
                     "- caution\n"
-                    "- context\n\n"
+                    "- context\n"
+                    "- learning_session\n\n"
 
+                    "Learning-session memory behavior:\n"
+                    "- If the user asks to learn something, store a concise memory of the learning topic and level when useful for continuity.\n"
+                    "- If the user later asks what was discussed yesterday/earlier, memory should help answer.\n"
+                    "- Teaching Python/basic coding from general knowledge should not require web search.\n"
+                    "- Do not wait for explicit 'remember this' if the session topic is useful for future continuity.\n\n"
                     "Return exactly this JSON shape:\n"
                     "{\n"
                     '  "should_store": true/false,\n'
@@ -309,6 +322,7 @@ def extract_memory_semantically(
                 "workflow",
                 "caution",
                 "context",
+                "learning_session",
             }:
                 kind = "context"
 
@@ -688,3 +702,82 @@ def debug_print_long_memory(user_key: str, limit: int = 20) -> None:
     print(f"Long memory items for {user_key}: {len(rows)}")
     for r in rows:
         print(dict(r))
+
+# ==================================================
+# Forced conversation notes
+# ==================================================
+# This is the "catatan kecil" layer.
+# It records actual conversation turns so NeuroMV has cross-chat continuity
+# even when semantic memory extraction decides not to store anything.
+
+def record_conversation_note(
+    *,
+    user_key: str,
+    chat_id: str | None,
+    user_message: str,
+    assistant_message: str,
+    importance: int = 4
+) -> bool:
+    user_message = _safe_text(user_message, 1200)
+    assistant_message = _safe_text(assistant_message, 1800)
+
+    if not user_key or not user_message or not assistant_message:
+        return False
+
+    combined = user_message + "\n" + assistant_message
+
+    if _contains_secret(combined):
+        return False
+
+    title_base = user_message.replace("\n", " ").strip()
+    title = "Recent conversation: " + (title_base[:72] + ("..." if len(title_base) > 72 else ""))
+
+    content = (
+        "This is an actual previous conversation note.\n"
+        f"User: {user_message}\n"
+        f"Assistant: {assistant_message}"
+    )
+
+    return store_memory_item(
+        user_key=user_key,
+        chat_id=chat_id,
+        kind="conversation_note",
+        title=title,
+        content=content,
+        importance=importance
+    )
+
+
+def retrieve_recent_conversation_notes(
+    *,
+    user_key: str,
+    limit: int = 8
+) -> str:
+    init_long_memory_tables()
+
+    user_key = _safe_text(user_key, 120)
+
+    if not user_key:
+        return ""
+
+    with _connect() as con:
+        rows = con.execute("""
+            SELECT title, content, chat_id, updated_at
+            FROM long_memory_items
+            WHERE user_key = ? AND kind = 'conversation_note'
+            ORDER BY updated_at DESC
+            LIMIT ?
+        """, (user_key, limit)).fetchall()
+
+    if not rows:
+        return ""
+
+    lines = []
+
+    for r in rows:
+        lines.append(
+            f"- {r['title']}\n"
+            f"  {r['content']}"
+        )
+
+    return "Recent cross-chat conversation notes:\n" + "\n".join(lines)

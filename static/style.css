@@ -2817,3 +2817,550 @@ body:not(.is-new-chat) .main::after {
   }
 }
 
+
+/* ==================================================
+   NEUROMV FORCED TEXT-WIPE SHIMMER
+   Only the status text shimmers. Bubble/pill stays calm.
+   Safe CSS-only patch.
+================================================== */
+
+/* Kill old bubble-wide shimmer layers */
+#app .ai-status.glossy-status::before,
+#app .ai-status.glossy-status::after {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+
+#app .ai-status.glossy-status .status-shine {
+  display: none !important;
+}
+
+/* Keep pill subtle, not sweeping */
+#app .ai-status.glossy-status {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.045)) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.14) !important;
+
+  backdrop-filter: blur(18px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+/* Per-status shimmer tint */
+#app .ai-status.glossy-status {
+  --mv-shimmer-base: rgba(190, 210, 255, .55);
+  --mv-shimmer-mid: rgba(225, 236, 255, .95);
+  --mv-shimmer-hot: rgba(255, 255, 255, 1);
+}
+
+#app .ai-status.searching-status {
+  --mv-shimmer-base: rgba(170, 255, 230, .55);
+  --mv-shimmer-mid: rgba(210, 255, 244, .95);
+  --mv-shimmer-hot: rgba(255, 255, 255, 1);
+}
+
+#app .ai-status.image-status {
+  --mv-shimmer-base: rgba(255, 190, 255, .55);
+  --mv-shimmer-mid: rgba(255, 225, 255, .95);
+  --mv-shimmer-hot: rgba(255, 255, 255, 1);
+}
+
+#app .ai-status.tool-status {
+  --mv-shimmer-base: rgba(218, 224, 255, .58);
+  --mv-shimmer-mid: rgba(240, 244, 255, .95);
+  --mv-shimmer-hot: rgba(255, 255, 255, 1);
+}
+
+/* THE IMPORTANT PART: shimmer is clipped to text */
+#app .ai-status.glossy-status .status-label {
+  display: inline-block !important;
+  position: relative !important;
+  z-index: 2 !important;
+
+  font-weight: 750 !important;
+  letter-spacing: -0.018em !important;
+
+  background-image:
+    linear-gradient(
+      105deg,
+      var(--mv-shimmer-base) 0%,
+      var(--mv-shimmer-base) 34%,
+      var(--mv-shimmer-hot) 45%,
+      var(--mv-shimmer-mid) 50%,
+      var(--mv-shimmer-hot) 55%,
+      var(--mv-shimmer-base) 66%,
+      var(--mv-shimmer-base) 100%
+    ) !important;
+
+  background-size: 260% 100% !important;
+  background-position: 140% 0 !important;
+
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+
+  animation: neuromvForcedTextWipe 1.85s ease-in-out infinite !important;
+}
+
+/* Flash stays dot-only, no text shimmer */
+#app .ai-status.instant-status,
+#app .ai-status.instant-status * {
+  -webkit-text-fill-color: currentColor !important;
+}
+
+#app .ai-status.instant-status .status-label {
+  animation: none !important;
+  background: none !important;
+  color: inherit !important;
+}
+
+/* Wipe motion */
+@keyframes neuromvForcedTextWipe {
+  0% {
+    background-position: 145% 0;
+  }
+
+  50% {
+    background-position: 0% 0;
+  }
+
+  100% {
+    background-position: -145% 0;
+  }
+}
+
+/* Fallback: if user disables animation, keep readable text */
+@media (prefers-reduced-motion: reduce) {
+  #app .ai-status.glossy-status .status-label {
+    animation: none !important;
+    background: none !important;
+    color: rgba(230, 238, 255, .92) !important;
+    -webkit-text-fill-color: rgba(230, 238, 255, .92) !important;
+  }
+}
+
+
+/* ==================================================
+   NEUROMV MARKDOWN HEADING SCALE H1-H6
+   Supports #, ##, ###, ####, #####, ###### like ChatGPT.
+================================================== */
+
+.message .content h1,
+.message .content h2,
+.message .content h3,
+.message .content h4,
+.message .content h5,
+.message .content h6 {
+  color: rgba(255,255,255,.97) !important;
+  text-wrap: balance;
+}
+
+.message .content h1 {
+  font-size: clamp(34px, 6vw, 72px) !important;
+  line-height: .98 !important;
+  letter-spacing: -0.065em !important;
+  font-weight: 850 !important;
+  margin: 28px 0 18px !important;
+}
+
+.message .content h2 {
+  font-size: clamp(28px, 4.7vw, 50px) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.052em !important;
+  font-weight: 820 !important;
+  margin: 25px 0 15px !important;
+}
+
+.message .content h3 {
+  font-size: clamp(22px, 3.2vw, 34px) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.038em !important;
+  font-weight: 780 !important;
+  margin: 22px 0 12px !important;
+}
+
+.message .content h4 {
+  font-size: clamp(18px, 2.4vw, 26px) !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.028em !important;
+  font-weight: 760 !important;
+  margin: 18px 0 10px !important;
+  color: rgba(235,240,255,.95) !important;
+}
+
+.message .content h5 {
+  font-size: clamp(16px, 2vw, 21px) !important;
+  line-height: 1.22 !important;
+  letter-spacing: -0.018em !important;
+  font-weight: 735 !important;
+  margin: 16px 0 8px !important;
+  color: rgba(225,232,248,.9) !important;
+}
+
+.message .content h6 {
+  font-size: clamp(14px, 1.7vw, 17px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+  font-weight: 720 !important;
+  margin: 14px 0 7px !important;
+  color: rgba(205,216,238,.82) !important;
+  text-transform: uppercase;
+}
+
+/* Mobile tuning */
+@media (max-width: 780px) {
+  .message .content h1 {
+    font-size: clamp(32px, 11vw, 54px) !important;
+  }
+
+  .message .content h2 {
+    font-size: clamp(26px, 8.5vw, 40px) !important;
+  }
+
+  .message .content h3 {
+    font-size: clamp(21px, 6.2vw, 30px) !important;
+  }
+
+  .message .content h4 {
+    font-size: clamp(18px, 5.2vw, 24px) !important;
+  }
+
+  .message .content h5 {
+    font-size: clamp(16px, 4.4vw, 20px) !important;
+  }
+
+  .message .content h6 {
+    font-size: clamp(13px, 3.8vw, 16px) !important;
+  }
+}
+
+
+/* ==================================================
+   NEUROMV COMPOSER MARKDOWN PREVIEW
+   User can type **bold**, _italic_, `code`, ```blocks```,
+   # to ###### headings before sending.
+================================================== */
+
+.composer-preview {
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  padding: 12px 14px;
+  margin: 0 0 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 10px 28px rgba(0,0,0,.16);
+  color: rgba(244,246,251,.94);
+}
+
+.composer-preview::before {
+  content: "Preview";
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.38);
+}
+
+.composer-preview.hidden {
+  display: none !important;
+}
+
+.composer-preview .content {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.composer-preview p {
+  margin: 0 0 10px;
+}
+
+.composer-preview p:last-child {
+  margin-bottom: 0;
+}
+
+.composer-preview strong {
+  color: rgba(255,255,255,.98);
+}
+
+.composer-preview em {
+  color: rgba(235,240,255,.92);
+}
+
+.composer-preview .inline-code,
+.composer-preview code:not(pre code) {
+  padding: 2px 5px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.composer-preview .code-wrap {
+  margin: 10px 0;
+}
+
+/* Preview heading scale: # toa masjid, ###### semut bawa mic */
+.composer-preview h1,
+.composer-preview h2,
+.composer-preview h3,
+.composer-preview h4,
+.composer-preview h5,
+.composer-preview h6 {
+  color: rgba(255,255,255,.97) !important;
+  text-wrap: balance;
+}
+
+.composer-preview h1 {
+  font-size: clamp(28px, 5.2vw, 54px) !important;
+  line-height: .98 !important;
+  letter-spacing: -0.06em !important;
+  font-weight: 850 !important;
+  margin: 14px 0 12px !important;
+}
+
+.composer-preview h2 {
+  font-size: clamp(24px, 4vw, 40px) !important;
+  line-height: 1.03 !important;
+  letter-spacing: -0.048em !important;
+  font-weight: 820 !important;
+  margin: 13px 0 10px !important;
+}
+
+.composer-preview h3 {
+  font-size: clamp(20px, 3vw, 30px) !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.035em !important;
+  font-weight: 780 !important;
+  margin: 12px 0 8px !important;
+}
+
+.composer-preview h4 {
+  font-size: clamp(17px, 2.3vw, 23px) !important;
+  line-height: 1.16 !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 760 !important;
+  margin: 10px 0 7px !important;
+}
+
+.composer-preview h5 {
+  font-size: clamp(15px, 1.9vw, 19px) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.015em !important;
+  font-weight: 735 !important;
+  margin: 9px 0 6px !important;
+  color: rgba(225,232,248,.9) !important;
+}
+
+.composer-preview h6 {
+  font-size: clamp(12px, 1.5vw, 15px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: .02em !important;
+  font-weight: 720 !important;
+  margin: 8px 0 5px !important;
+  color: rgba(205,216,238,.82) !important;
+  text-transform: uppercase;
+}
+
+/* Sent message heading scale too */
+.message .content h1,
+.message .content h2,
+.message .content h3,
+.message .content h4,
+.message .content h5,
+.message .content h6 {
+  color: rgba(255,255,255,.97) !important;
+  text-wrap: balance;
+}
+
+.message .content h1 {
+  font-size: clamp(34px, 6vw, 72px) !important;
+  line-height: .98 !important;
+  letter-spacing: -0.065em !important;
+  font-weight: 850 !important;
+  margin: 28px 0 18px !important;
+}
+
+.message .content h2 {
+  font-size: clamp(28px, 4.7vw, 50px) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.052em !important;
+  font-weight: 820 !important;
+  margin: 25px 0 15px !important;
+}
+
+.message .content h3 {
+  font-size: clamp(22px, 3.2vw, 34px) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.038em !important;
+  font-weight: 780 !important;
+  margin: 22px 0 12px !important;
+}
+
+.message .content h4 {
+  font-size: clamp(18px, 2.4vw, 26px) !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.028em !important;
+  font-weight: 760 !important;
+  margin: 18px 0 10px !important;
+  color: rgba(235,240,255,.95) !important;
+}
+
+.message .content h5 {
+  font-size: clamp(16px, 2vw, 21px) !important;
+  line-height: 1.22 !important;
+  letter-spacing: -0.018em !important;
+  font-weight: 735 !important;
+  margin: 16px 0 8px !important;
+  color: rgba(225,232,248,.9) !important;
+}
+
+.message .content h6 {
+  font-size: clamp(14px, 1.7vw, 17px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: .02em !important;
+  font-weight: 720 !important;
+  margin: 14px 0 7px !important;
+  color: rgba(205,216,238,.82) !important;
+  text-transform: uppercase;
+}
+
+@media (max-width: 780px) {
+  .composer-preview {
+    max-height: 220px;
+    padding: 10px 12px;
+  }
+
+  .composer-preview h1 {
+    font-size: clamp(28px, 9.5vw, 44px) !important;
+  }
+
+  .composer-preview h2 {
+    font-size: clamp(23px, 7.5vw, 34px) !important;
+  }
+
+  .composer-preview h3 {
+    font-size: clamp(19px, 6vw, 27px) !important;
+  }
+}
+
+
+/* ==================================================
+   NEUROMV PROFESSIONAL LIMIT POPUP
+================================================== */
+
+.limit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 7, 12, .64);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.limit-modal.hidden {
+  display: none !important;
+}
+
+.limit-card {
+  width: min(390px, 100%);
+  padding: 26px;
+  border-radius: 28px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(28, 32, 44, .96), rgba(18, 21, 31, .96));
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 28px 90px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+.limit-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 900;
+  color: rgba(255,255,255,.95);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.26), transparent 30%),
+    linear-gradient(135deg, rgba(142,162,255,.95), rgba(200,120,255,.85));
+  box-shadow: 0 14px 34px rgba(116,120,255,.22);
+}
+
+.limit-card h2 {
+  margin: 0 0 9px;
+  font-size: 24px;
+  line-height: 1.12;
+  letter-spacing: -.04em;
+  color: rgba(255,255,255,.98);
+}
+
+.limit-card p {
+  margin: 0 0 20px;
+  color: rgba(220,228,240,.72);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.limit-card button {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.92);
+  color: #101217;
+  font-weight: 850;
+}
+
+#sendBtn.limit-locked,
+#sendBtn:disabled.limit-locked {
+  background: rgba(80, 84, 96, .55) !important;
+  color: rgba(255,255,255,.34) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 8px 20px rgba(0,0,0,.18) !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+#sendBtn.limit-locked::before,
+#sendBtn:disabled.limit-locked::before {
+  color: rgba(255,255,255,.38) !important;
+}
+
+#input.limit-locked {
+  color: rgba(255,255,255,.55) !important;
+}
+
+
+/* ==================================================
+   HIDE OLD COMPOSER PREVIEW BOX
+================================================== */
+
+#composerPreview,
+.composer-preview {
+  display: none !important;
+}
+

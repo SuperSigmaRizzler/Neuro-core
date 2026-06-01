@@ -1,0 +1,51 @@
+from typing import Dict
+
+
+def classify_user_intent(message: str) -> Dict:
+    """
+    Non-blocking intent fallback.
+
+    Important:
+    - No model call here.
+    - No keyword routing.
+    - Conservative by default so /api/chat can start streaming immediately.
+    """
+    text = str(message or "")
+
+    looks_complex = (
+        len(text) > 900
+        or text.count("\n") >= 8
+        or text.count("```") >= 2
+    )
+
+    return {
+        "needs_thinking": bool(looks_complex),
+        "needs_search": False,
+        "wants_image_generation": False,
+        "complexity": "complex" if looks_complex else "simple"
+    }
+
+
+def choose_runtime_mode(user_selected_mode: str, message: str, intent: Dict | None = None) -> str:
+    selected = str(user_selected_mode or "instant").lower().strip()
+    intent = intent or classify_user_intent(message)
+
+    if selected in {"thinking", "pro", "ultra"}:
+        return "thinking"
+
+    if intent.get("needs_thinking"):
+        return "thinking"
+
+    return "instant"
+
+
+def should_run_search(intent_info: Dict) -> bool:
+    return bool((intent_info or {}).get("needs_search"))
+
+
+def wants_image_generation(intent_info: Dict, message: str = "") -> bool:
+    return bool((intent_info or {}).get("wants_image_generation"))
+
+
+def may_need_fresh_info(message: str) -> bool:
+    return False
