@@ -232,7 +232,7 @@ def user_exists(user_id) -> bool:
         return False
 
     try:
-        with get_db() as db:
+        with connect() as db:
             row = db.execute(
                 "SELECT id FROM users WHERE id = ?",
                 (user_id,)
