@@ -1,0 +1,34 @@
+<svg
+    id="neuromvSplashSVG"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 512 512"
+    fill="none">
+
+    <defs>
+
+        <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#44F2FF"/>
+            <stop offset="55%" stop-color="#6E8BFF"/>
+            <stop offset="100%" stop-color="#A84DFF"/>
+        </linearGradient>
+
+        <filter id="brainGlow">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+    </defs>
+
+    <!-- Animated neuron layer -->
+    <g id="brainPaths"></g>
+
+    <!-- Animated nodes -->
+    <g id="brainNodes"></g>
+
+    <!-- Letter N -->
+    <g id="brainLogo"></g>
+
+</svg>

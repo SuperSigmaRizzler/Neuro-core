@@ -6,9 +6,21 @@
   <title>{{ app_name }}</title>
 
   <link rel="stylesheet" href="/static/style.css?v=neuromv-fix-3">
+  <link rel="stylesheet" href="/static/splash.css?v=neuromv-fix-4">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css">
 </head>
 <body>
+
+
+<div id="bootSplash" class="boot-splash" aria-hidden="true">
+  <div class="boot-bg-glow"></div>
+  <div class="boot-logo-wrap">
+    <img src="/static/img/neuromv-logo.png"
+         class="boot-logo"
+         alt="NeuroMV">
+  </div>
+</div>
+
 
 <div class="modal hidden" id="authModal">
   <div class="modal-card">
@@ -156,6 +168,7 @@ window.MathJax = {
 <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1/plugins/autoloader/prism-autoloader.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="/static/splash.js?v=neuromv-fix-4"></script>
 <script src="/static/script.js?v=neuromv-fix-3"></script>
 </body>
 </html>

@@ -1,0 +1,164 @@
+:root{
+  --boot-bg:#050816;
+  --boot-cyan:#43F4FF;
+  --boot-blue:#6E8BFF;
+  --boot-purple:#A84DFF;
+}
+
+#bootSplash{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--boot-bg);
+  overflow:hidden;
+  transition:opacity .8s ease,visibility .8s ease;
+}
+
+#bootSplash.hide{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+#bootSplash::before{
+  content:"";
+  position:absolute;
+  width:120vmax;
+  height:120vmax;
+  border-radius:50%;
+  background:
+    radial-gradient(circle,var(--boot-cyan),transparent 60%),
+    radial-gradient(circle,var(--boot-purple),transparent 70%);
+  filter:blur(120px);
+  opacity:.18;
+  animation:auroraMove 8s ease-in-out infinite alternate;
+}
+
+.boot-logo-wrap{
+  position:relative;
+  width:220px;
+  height:220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.boot-energy{
+  position:absolute;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--boot-cyan);
+  box-shadow:
+      0 0 10px var(--boot-cyan),
+      0 0 25px var(--boot-cyan),
+      0 0 45px var(--boot-cyan);
+  animation:
+      energyAppear .5s ease,
+      energyFloat 2.5s ease-in-out infinite;
+}
+
+.boot-svg{
+  position:absolute;
+  inset:0;
+  opacity:.25;
+}
+
+.boot-logo{
+  width:170px;
+  position:relative;
+  z-index:3;
+  filter:
+      drop-shadow(0 0 14px rgba(67,244,255,.25));
+  opacity:0;
+  transform:scale(.82);
+  animation:
+      logoReveal .9s .8s forwards,
+      logoFloat 3s 1.8s ease-in-out infinite;
+}
+
+.boot-gloss{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+
+.boot-gloss::after{
+  content:"";
+  position:absolute;
+  width:35%;
+  height:220%;
+  top:-60%;
+  left:-50%;
+  background:
+      linear-gradient(
+          90deg,
+          transparent,
+          rgba(255,255,255,.8),
+          transparent);
+  transform:rotate(18deg);
+  animation:glossSweep 2.8s 1.5s forwards;
+}
+
+@keyframes auroraMove{
+  from{
+    transform:translate(-4%,-2%) scale(1);
+  }
+  to{
+    transform:translate(4%,2%) scale(1.12);
+  }
+}
+
+@keyframes energyAppear{
+  from{
+    opacity:0;
+    transform:scale(.2);
+  }
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+@keyframes energyFloat{
+  0%,100%{
+    transform:translateY(0);
+  }
+  50%{
+    transform:translateY(-6px);
+  }
+}
+
+@keyframes logoReveal{
+  from{
+    opacity:0;
+    filter:blur(16px);
+    transform:scale(.82);
+  }
+  to{
+    opacity:1;
+    filter:blur(0);
+    transform:scale(1);
+  }
+}
+
+@keyframes logoFloat{
+  0%,100%{
+    transform:translateY(0) scale(1);
+  }
+  50%{
+    transform:translateY(-4px) scale(1.03);
+  }
+}
+
+@keyframes glossSweep{
+  from{
+    left:-55%;
+  }
+  to{
+    left:150%;
+  }
+}

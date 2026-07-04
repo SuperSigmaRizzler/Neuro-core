@@ -727,6 +727,28 @@ function getNeuroDisplayName() {
   return String(raw).trim() || "Guest";
 }
 
+const HERO_GREETINGS = [
+  "Ready when you are",
+  "Welcome back",
+  "How can I help today?",
+  "What would you like to explore today?",
+  "Let's create something together",
+  "What's on your mind?",
+  "Where shall we begin?",
+  "I'm ready whenever you are",
+  "Let's build something amazing",
+  "How may I assist you today?",
+  "Let's turn ideas into reality",
+  "Every great project starts with one message",
+  "What are we creating today?",
+  "Let's get started",
+  "I'm here whenever you need me"
+];
+
+const SESSION_GREETING =
+  HERO_GREETINGS[
+    Math.floor(Math.random() * HERO_GREETINGS.length)
+  ];
 
 function renderChat() {
   chatTitle.textContent = currentChatTitle || "New Chat";
@@ -745,7 +767,7 @@ function renderChat() {
           <span class="prism-core"></span>
         </div>
 
-        <h2 class="hero-title">Ready when you are, ${escapeHtml(displayName)}.</h2>
+    <h2 class="hero-title">${SESSION_GREETING}, ${escapeHtml(displayName)}.</h2>
 
         <p class="hero-subtitle">
           ${currentUser ? "Synced with NeuroACC." : "Log in to save your chats across devices."}
