@@ -1,34 +1,474 @@
 <svg
-    id="neuromvSplashSVG"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 512 512"
-    fill="none">
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-label="NeuroMV splash logo">
 
-    <defs>
+  <defs>
+    <linearGradient id="gBrain" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#39f1ff"/>
+      <stop offset="45%" stop-color="#4eb4ff"/>
+      <stop offset="55%" stop-color="#7f7bff"/>
+      <stop offset="100%" stop-color="#d86bff"/>
+    </linearGradient>
 
-        <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#44F2FF"/>
-            <stop offset="55%" stop-color="#6E8BFF"/>
-            <stop offset="100%" stop-color="#A84DFF"/>
-        </linearGradient>
+    <linearGradient id="gLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2be7ff"/>
+      <stop offset="100%" stop-color="#3ea4ff"/>
+    </linearGradient>
 
-        <filter id="brainGlow">
-            <feGaussianBlur stdDeviation="6" result="blur"/>
-            <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
+    <linearGradient id="gRight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7d72ff"/>
+      <stop offset="100%" stop-color="#d96cff"/>
+    </linearGradient>
 
-    </defs>
+    <radialGradient id="gAura" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#6df4ff" stop-opacity=".28"/>
+      <stop offset="35%" stop-color="#6f80ff" stop-opacity=".12"/>
+      <stop offset="70%" stop-color="#c35dff" stop-opacity=".08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
 
-    <!-- Animated neuron layer -->
-    <g id="brainPaths"></g>
+    <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
 
-    <!-- Animated nodes -->
-    <g id="brainNodes"></g>
+    <filter id="glowPurple" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
 
-    <!-- Letter N -->
-    <g id="brainLogo"></g>
+    <filter id="glowWhite" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
 
+    <filter id="softBlur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <style>
+    :root {
+      --cyan: #39f1ff;
+      --blue: #4eb4ff;
+      --purple: #d86bff;
+      --white: #f8fbff;
+      --bg: #050816;
+    }
+
+    .bg {
+      fill: url(#gAura);
+      opacity: .95;
+      animation: aura 3.6s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+
+    .outline,
+    .trace {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .outline {
+      stroke-width: 14;
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: draw 1.15s ease forwards;
+    }
+
+    .outline.left {
+      stroke: url(#gLeft);
+      filter: url(#glowBlue);
+      animation-delay: .05s;
+    }
+
+    .outline.right {
+      stroke: url(#gRight);
+      filter: url(#glowPurple);
+      animation-delay: .08s;
+    }
+
+    .trace {
+      stroke-width: 9;
+      stroke-dasharray: 260;
+      stroke-dashoffset: 260;
+      animation: draw .78s ease forwards;
+    }
+
+    .trace.left,
+    .trace.leftNode {
+      stroke: url(#gLeft);
+      filter: url(#glowBlue);
+    }
+
+    .trace.right,
+    .trace.rightNode {
+      stroke: url(#gRight);
+      filter: url(#glowPurple);
+    }
+
+    .trace.t1 { animation-delay: .24s; }
+    .trace.t2 { animation-delay: .28s; }
+    .trace.t3 { animation-delay: .32s; }
+    .trace.t4 { animation-delay: .36s; }
+    .trace.t5 { animation-delay: .40s; }
+    .trace.t6 { animation-delay: .44s; }
+    .trace.t7 { animation-delay: .48s; }
+    .trace.t8 { animation-delay: .52s; }
+    .trace.t9 { animation-delay: .56s; }
+    .trace.t10 { animation-delay: .60s; }
+    .trace.t11 { animation-delay: .64s; }
+    .trace.t12 { animation-delay: .68s; }
+
+    .node {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pop .22s ease forwards;
+    }
+
+    .node.left {
+      fill: #07111c;
+      stroke: #33ecff;
+      stroke-width: 6;
+      filter: url(#glowBlue);
+    }
+
+    .node.right {
+      fill: #07111c;
+      stroke: #d26dff;
+      stroke-width: 6;
+      filter: url(#glowPurple);
+    }
+
+    .node.n1 { animation-delay: .28s; }
+    .node.n2 { animation-delay: .34s; }
+    .node.n3 { animation-delay: .40s; }
+    .node.n4 { animation-delay: .46s; }
+    .node.n5 { animation-delay: .52s; }
+    .node.n6 { animation-delay: .58s; }
+    .node.n7 { animation-delay: .64s; }
+    .node.n8 { animation-delay: .70s; }
+    .node.n9 { animation-delay: .76s; }
+    .node.n10 { animation-delay: .82s; }
+    .node.n11 { animation-delay: .88s; }
+    .node.n12 { animation-delay: .94s; }
+
+    .core {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: coreReveal .72s ease forwards;
+      animation-delay: .92s;
+    }
+
+    .core-shadow {
+      fill: #000;
+      opacity: .35;
+      filter: url(#softBlur);
+    }
+
+    .coreN {
+      fill: none;
+      stroke: var(--white);
+      stroke-width: 30;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: url(#glowWhite);
+    }
+
+    .coreN-accent {
+      fill: none;
+      stroke: url(#gBrain);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 120;
+      stroke-dashoffset: 120;
+      filter: url(#glowWhite);
+      animation: draw .55s ease forwards;
+      animation-delay: 1.00s;
+    }
+
+    .shine {
+      fill: none;
+      stroke: rgba(255,255,255,.95);
+      stroke-width: 18;
+      stroke-linecap: round;
+      filter: url(#glowWhite);
+      opacity: 0;
+      animation: sweep 2.2s ease forwards;
+      animation-delay: 1.35s;
+    }
+
+    .breath {
+      transform-origin: center;
+      transform-box: fill-box;
+      animation: breathe 2.8s ease-in-out infinite;
+      animation-delay: 1.25s;
+    }
+
+    .pulseDot {
+      fill: #42f4ff;
+      opacity: 0;
+      filter: url(#glowBlue);
+    }
+
+    .pulseGlow {
+      fill: none;
+      stroke: rgba(66,244,255,.7);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 6 12;
+      filter: url(#glowBlue);
+      opacity: .75;
+    }
+
+    .pulseA {
+      animation: dotIn .45s ease forwards, dotPulse 1.6s ease-in-out infinite;
+      animation-delay: .16s, .16s;
+    }
+
+    .pulseB {
+      animation: dotIn .45s ease forwards, dotPulse 1.6s ease-in-out infinite;
+      animation-delay: .96s, .96s;
+    }
+
+    .idleFade {
+      opacity: 1;
+      animation: idleFade 2.8s ease-in-out infinite;
+    }
+
+    @keyframes draw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes pop {
+      0% {
+        opacity: 0;
+        transform: scale(.25);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes coreReveal {
+      0% {
+        opacity: 0;
+        transform: scale(.84);
+        filter: blur(12px);
+      }
+      60% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes sweep {
+      0% {
+        opacity: 0;
+        transform: translateX(-86px) rotate(18deg);
+      }
+      18% {
+        opacity: .95;
+      }
+      72% {
+        opacity: .88;
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(300px) rotate(18deg);
+      }
+    }
+
+    @keyframes dotIn {
+      0% {
+        opacity: 0;
+        transform: scale(.2);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dotPulse {
+      0%, 100% {
+        transform: scale(.9);
+        opacity: .88;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+    }
+
+    @keyframes aura {
+      0%, 100% {
+        transform: scale(1);
+        opacity: .15;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: .24;
+      }
+    }
+
+    @keyframes idleFade {
+      0%, 100% { opacity: .78; }
+      50% { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bg,
+      .outline,
+      .trace,
+      .node,
+      .core,
+      .coreN-accent,
+      .shine,
+      .breath,
+      .pulseA,
+      .pulseB {
+        animation: none !important;
+      }
+      .outline,
+      .trace {
+        stroke-dashoffset: 0 !important;
+        opacity: 1 !important;
+      }
+      .node,
+      .core {
+        opacity: 1 !important;
+      }
+      .pulseDot {
+        opacity: 1 !important;
+      }
+    }
+  </style>
+
+  <g class="breath">
+    <circle class="bg" cx="256" cy="256" r="205"/>
+
+    <!-- brain outline -->
+    <path
+      class="outline left"
+      d="M 250 446
+         C 217 444, 194 434, 179 413
+         C 165 394, 160 372, 162 350
+         C 164 326, 150 306, 129 289
+         C 98 263, 81 227, 80 188
+         C 79 148, 96 114, 129 95
+         C 155 80, 184 73, 215 76
+         C 227 77, 240 83, 248 92
+         C 250 95, 252 98, 254 103" />
+
+    <path
+      class="outline right"
+      d="M 262 103
+         C 264 98, 266 95, 268 92
+         C 276 83, 289 77, 301 76
+         C 332 73, 361 80, 387 95
+         C 420 114, 437 148, 436 188
+         C 435 227, 418 263, 387 289
+         C 366 306, 352 326, 354 350
+         C 356 372, 351 394, 337 413
+         C 322 434, 299 444, 266 446" />
+
+    <!-- left traces -->
+    <path class="trace left t1" d="M 110 248 H 164" />
+    <path class="trace left t2" d="M 134 194 V 151 H 178" />
+    <path class="trace left t3" d="M 149 281 H 191 V 242 L 206 226" />
+    <path class="trace left t4" d="M 118 333 H 162 V 347" />
+    <path class="trace left t5" d="M 100 281 L 127 309" />
+    <path class="trace left t6" d="M 141 378 L 164 346" />
+
+    <!-- right traces -->
+    <path class="trace right t7" d="M 402 248 H 348" />
+    <path class="trace right t8" d="M 378 194 V 151 H 334" />
+    <path class="trace right t9" d="M 363 281 H 321 V 242 L 306 226" />
+    <path class="trace right t10" d="M 394 333 H 350 V 347" />
+    <path class="trace right t11" d="M 412 281 L 385 309" />
+    <path class="trace right t12" d="M 371 378 L 348 346" />
+
+    <!-- nodes left -->
+    <circle class="node left n1" cx="110" cy="248" r="9"/>
+    <circle class="node left n2" cx="134" cy="151" r="9"/>
+    <circle class="node left n3" cx="149" cy="281" r="9"/>
+    <circle class="node left n4" cx="118" cy="333" r="9"/>
+    <circle class="node left n5" cx="100" cy="281" r="9"/>
+    <circle class="node left n6" cx="141" cy="378" r="9"/>
+
+    <!-- nodes right -->
+    <circle class="node right n7" cx="402" cy="248" r="9"/>
+    <circle class="node right n8" cx="378" cy="151" r="9"/>
+    <circle class="node right n9" cx="363" cy="281" r="9"/>
+    <circle class="node right n10" cx="394" cy="333" r="9"/>
+    <circle class="node right n11" cx="412" cy="281" r="9"/>
+    <circle class="node right n12" cx="371" cy="378" r="9"/>
+
+    <!-- energy pulse paths -->
+    <path id="pulsePathL" d="M 103 248 H 168 L 199 218"/>
+    <path id="pulsePathR" d="M 409 248 H 344 L 313 218"/>
+
+    <g class="idleFade">
+      <circle class="pulseDot pulseA" r="5.8">
+        <animateMotion dur="2.35s" repeatCount="indefinite" rotate="auto">
+          <mpath xlink:href="#pulsePathL" href="#pulsePathL"/>
+        </animateMotion>
+      </circle>
+
+      <circle class="pulseDot pulseB" r="5.8">
+        <animateMotion dur="2.35s" repeatCount="indefinite" rotate="auto">
+          <mpath xlink:href="#pulsePathR" href="#pulsePathR"/>
+        </animateMotion>
+      </circle>
+
+      <path class="pulseGlow" d="M 103 248 H 168 L 199 218"/>
+      <path class="pulseGlow" d="M 409 248 H 344 L 313 218"/>
+    </g>
+
+    <!-- center N -->
+    <g class="core">
+      <path class="core-shadow" d="M 204 356 V 156 L 308 356 V 156" />
+      <path class="coreN" d="M 204 356 V 156 L 308 356 V 156" />
+      <path class="coreN-accent" d="M 204 356 V 156 L 308 356 V 156" />
+      <path
+        class="shine"
+        d="M 196 172 L 317 172">
+        <animate attributeName="opacity" values="0;1;0" dur="2.1s" begin="1.42s" repeatCount="1"/>
+        <animate attributeName="stroke-dashoffset" values="240;0" dur=".8s" begin="1.42s" repeatCount="1"/>
+      </path>
+    </g>
+  </g>
 </svg>

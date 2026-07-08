@@ -6,7 +6,7 @@
   <title>{{ app_name }}</title>
 
   <link rel="stylesheet" href="/static/style.css?v=neuromv-fix-3">
-  <link rel="stylesheet" href="/static/splash.css?v=neuromv-fix-4">
+  <link rel="stylesheet" href="/static/splash.css?v=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css">
 </head>
 <body>
@@ -14,11 +14,122 @@
 
 <div id="bootSplash" class="boot-splash" aria-hidden="true">
   <div class="boot-bg-glow"></div>
-  <div class="boot-logo-wrap">
-    <img src="/static/img/neuromv-logo.png"
-         class="boot-logo"
-         alt="NeuroMV">
-  </div>
+
+<div class="boot-logo-wrap">
+
+<svg
+xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 512 512"
+class="boot-svg"
+aria-hidden="true">
+
+<defs>
+
+<linearGradient id="leftGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#29ecff"/>
+<stop offset="100%" stop-color="#4f8dff"/>
+</linearGradient>
+
+<linearGradient id="rightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#6b70ff"/>
+<stop offset="100%" stop-color="#df67ff"/>
+</linearGradient>
+
+<linearGradient id="nGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#ffffff"/>
+<stop offset="100%" stop-color="#dfe9ff"/>
+</linearGradient>
+
+<filter id="glow">
+<feGaussianBlur stdDeviation="4" result="b"/>
+<feMerge>
+<feMergeNode in="b"/>
+<feMergeNode in="SourceGraphic"/>
+</feMerge>
+</filter>
+
+</defs>
+
+<circle
+class="energy-core"
+cx="256"
+cy="256"
+r="20"/>
+
+<path
+class="brain left"
+d="
+M255 455
+C145 455 82 380 82 300
+C82 248 104 213 140 185
+C118 95 185 48 245 76
+L255 95"
+/>
+
+<path
+class="brain right"
+d="
+M257 95
+L267 76
+C327 48 394 95 372 185
+C408 213 430 248 430 300
+C430 380 367 455 257 455
+"
+/>
+
+<path class="trace left"
+d="M165 142 L165 240 L215 290"/>
+
+<path class="trace left"
+d="M118 248 L190 248"/>
+
+<path class="trace left"
+d="M140 330 L190 300"/>
+
+<path class="trace left"
+d="M180 390 L215 360"/>
+
+<path class="trace right"
+d="M347 142 L347 240 L297 290"/>
+
+<path class="trace right"
+d="M394 248 L322 248"/>
+
+<path class="trace right"
+d="M372 330 L322 300"/>
+
+<path class="trace right"
+d="M332 390 L297 360"/>
+
+<circle class="node left" cx="165" cy="142" r="8"/>
+<circle class="node left" cx="118" cy="248" r="8"/>
+<circle class="node left" cx="140" cy="330" r="8"/>
+<circle class="node left" cx="180" cy="390" r="8"/>
+
+<circle class="node right" cx="347" cy="142" r="8"/>
+<circle class="node right" cx="394" cy="248" r="8"/>
+<circle class="node right" cx="372" cy="330" r="8"/>
+<circle class="node right" cx="332" cy="390" r="8"/>
+
+<circle class="pulse" r="5">
+<animateMotion
+dur="2.2s"
+repeatCount="indefinite"
+path="M165 142 L165 240 L215 290"/>
+</circle>
+
+<path
+class="letterN"
+d="
+M205 350
+V165
+L305 350
+V165
+"/>
+
+</svg>
+
+</div>
 </div>
 
 
